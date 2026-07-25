@@ -1,144 +1,135 @@
-# Ultimate-Pipeline
-
+import os
+import sys
+import time
+import http.server
+from threading import Thread
 import numpy as np
-import scipy.stats as stats
 
-# Ensure reproducibility across validation runs
-np.random.seed(42)
+# System Operational Limits
+ALPHA_LIMIT = 0.10
+MIN_R_LIMIT = 0.20
 
-def calculate_spatial_profile_alignment(visible_light_intensity, dark_matter_density):
+class PanmatrixAdvancedNoiseRegistry:
     """
-    Computes cross-examination statistics between visible mass profiles and 
-    reconstructed dark matter density maps to evaluate structural variance.
+    In-memory storage array that compiles basic spatial correlation statistics
+    and high-resolution LIGO noise transients into distinct telemetry registers.
     """
-    x = visible_light_intensity[:-1]
-    y = dark_matter_density[1:]  # Accounts for spatial offset/shear lag
-    
-    true_r, _ = stats.pearsonr(x, y)
-    
-    # 10k Phase-Scrambling Monte Carlo Loop to test alignment validity
-    iters = 10000
-    spurious = 0
-    y_fft = np.fft.rfft(y)
-    
-    for _ in range(iters):
-        ph = np.random.uniform(0, 2 * np.pi, len(y_fft))
-        r_ph = np.exp(1j * ph)
-        s_fft = y_fft * r_ph
-        s_y = np.fft.irfft(s_fft, n=len(y))
+    def __init__(self):
+        # Basic Metrics
+        self.pearson_r = 0.0
+        self.empirical_p = 1.0
+        self.is_degraded = 0
+        self.total_processed = 0
         
-        fake_r, _ = stats.pearsonr(x, s_y)
-        if abs(fake_r) >= abs(true_r):
-            spurious += 1
+        # --- ADVANCED LIGO NOISECOUNTERS ---
+        # Tracking environmental and optomechanical interference vectors
+        self.noise_60hz_line_count = 0        # Industrial power grid coupling transients
+        self.noise_microseismic_count = 0    # Low-frequency oceanic crustal waves
+        self.noise_scattered_light_count = 0 # Optical cavity lock-loss glitches
+        
+        # Histogram Matrix Setup
+        self.r_buckets = {-1.0: 0, -0.5: 0, 0.0: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1.0: 0}
+        self.r_sum = 0.0
+        self.r_count = 0
+
+    def inject_ligo_noise_transient(self, noise_type):
+        """Increments high-resolution ground-based interference counters."""
+        if noise_type == "60HZ_LINE":
+            self.noise_60hz_line_count += 1
+        elif noise_type == "MICROSEISMIC":
+            self.noise_microseismic_count += 1
+        elif noise_type == "SCATTERED_LIGHT":
+            self.noise_scattered_light_count += 1
+
+    def update_metrics(self, r, p, degraded, noise_type=None):
+        """Updates internal status matrices on the fly."""
+        self.pearson_r = r
+        self.empirical_p = p
+        self.is_degraded = 1 if degraded else 0
+        self.total_processed += 1
+        
+        # Track historical histogram spectrum distribution
+        self.r_count += 1
+        self.r_sum += r
+        for bound in sorted(self.r_buckets.keys()):
+            if r <= bound:
+                self.r_buckets[bound] += 1
+                
+        if noise_type:
+            self.inject_ligo_noise_transient(noise_type)
+
+    def generate_exposition(self):
+        """Formats multi-band parameters cleanly into standard exposition string blocks."""
+        lines = [
+            f"# HELP panmatrix_processed_total Ingested matrix counts.",
+            f"# TYPE panmatrix_processed_total counter",
+            f"panmatrix_processed_total {self.total_processed}",
             
-    emp_p = spurious / iters
-    return true_r, emp_p
-
-def gen_lensing_time_delay(num_sources=3, base_delay_hours=1.2, core_mass_solar=1e15):
-    """
-    Simulates actual multi-image gravitational lensing geometric time delays.
-    Generates unique, time-shifted phase-slip streams for a given number of 
-    discrete background galaxies passing around a high-density cluster core.
-    """
-    t = np.arange(0, 86400, 10.0) 
-    streams = {}
-    
-    # Scale background delay amplitude linearly based on core mass parameter
-    mass_scaling = core_mass_solar / 1e15
-    
-    for i in range(num_sources):
-        # Base gravitational signal per independent light path
-        gal_signal = 1e-21 * np.sin(2 * np.pi * (0.005 + (i * 0.001)) * t)
-        noise = np.random.normal(0, 1e-20, len(t))
-        stream = gal_signal + noise
+            f"# HELP panmatrix_spatial_pearson_r Calculated spatial alignment gauge.",
+            f"# TYPE panmatrix_spatial_pearson_r gauge",
+            f"panmatrix_spatial_pearson_r {self.pearson_r:+.4f}",
+            
+            f"# HELP panmatrix_degraded_state_active Safe throttle reversal engagement tracking.",
+            f"# TYPE panmatrix_degraded_state_active gauge",
+            f"panmatrix_degraded_state_active {self.is_degraded}",
+            
+            # --- LIGO NOISE ENGINE METRICS ---
+            f"# HELP ligo_noise_60hz_line_transients_total Count of 60Hz power grid harmonic spike events.",
+            f"# TYPE ligo_noise_60hz_line_transients_total counter",
+            f"ligo_noise_60hz_line_transients_total {self.noise_60hz_line_count}",
+            
+            f"# HELP ligo_noise_microseismic_transients_total Count of ocean wave scattering ground vibrations.",
+            f"# TYPE ligo_noise_microseismic_transients_total counter",
+            f"ligo_noise_microseismic_transients_total {self.noise_microseismic_count}",
+            
+            f"# HELP ligo_noise_scattered_light_glitches_total Count of laser mirror cavity scattering anomalies.",
+            f"# TYPE ligo_noise_scattered_light_glitches_total counter",
+            f"ligo_noise_scattered_light_glitches_total {self.noise_scattered_light_count}",
+            
+            f"# HELP panmatrix_correlation_distribution Structural correlation histogram map.",
+            f"# TYPE panmatrix_correlation_distribution histogram"
+        ]
         
-        # Each unique image path hits the high-density halo boundary at different times
-        path_delay_seconds = int((base_delay_hours * 3600) * (1.0 + (i * 0.25)))
-        halo_boundary_idx = int(len(t) * 0.4) + (i * 500)
-        
-        # Inject the delayed Shapiro + geometric travel time step
-        stream[halo_boundary_idx:] += mass_scaling * 5e-20 * np.tanh(
-            (t[halo_boundary_idx:] - t[halo_boundary_idx]) / path_delay_seconds
-        )
-        streams[f"source_image_{i+1}"] = stream
-        
-    return t, streams
+        le_accumulate = 0
+        for b in sorted(self.r_buckets.keys()):
+            le_accumulate += self.r_buckets[b]
+            lines.append(f'panmatrix_correlation_distribution_bucket{{le="{b}"}} {le_accumulate}')
+            
+        lines.append(f"panmatrix_correlation_distribution_sum {self.r_sum:.4f}")
+        lines.append(f"panmatrix_correlation_distribution_count {self.r_count}")
+        return "\n".join(lines) + "\n"
 
-class AdaptivePDController:
-    """
-    An active feedback loop that dynamically adjusts Proportional Gain (Gp)
-    based on incoming core cluster mass anomalies to maintain grid balance.
-    """
-    def __init__(self, base_Gp=1.8, Gd=0.9):
-        self.base_Gp = base_Gp
-        self.Gd = Gd
-        self.Gp = base_Gp
-        self.last_err = 0.0
+# Global data allocation
+registry = PanmatrixAdvancedNoiseRegistry()
 
-    def adjust_gains(self, observed_core_mass_solar):
-        """
-        Dynamically scales up Proportional Gain if the cluster mass exceeds
-        the baseline design threshold (1e15 Solar Masses), compensating for spikes.
-        """
-        baseline_mass = 1e15
-        if observed_core_mass_solar > baseline_mass:
-            scaling_factor = observed_core_mass_solar / baseline_mass
-            self.Gp = self.base_Gp * np.log10(9 + scaling_factor)
+class IntegratedNetworkPort(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/metrics":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(registry.generate_exposition().encode("utf-8"))
         else:
-            self.Gp = self.base_Gp
+            self.send_response(404)
+            self.end_headers()
+    def log_message(self, format, *args): pass
 
-    def get_actuation(self, current_phase_error):
-        err = 0.0 - current_phase_error
-        deriv = err - self.last_err
-        self.last_err = err
-        return (self.Gp * err) + (self.Gd * deriv)
+def start_metrics_server(port=9100):
+    server = http.server.HTTPServer(("0.0.0.0", port), IntegratedNetworkPort)
+    Thread(target=server.serve_forever, daemon=True).start()
+    print(f"[+] Multi-Band Noise Exporter running via: http://localhost:{port}/metrics")
 
 if __name__ == "__main__":
-    print("====================================================")
-    print(" EXECUTING: DYNAMIC MULTI-IMAGE ADAPTIVE PIPELINE   ")
-    print("====================================================\n")
+    start_metrics_server(port=9100)
     
-    # Configuration profiles
-    target_mass = 2.5e15  # Simulated core mass anomaly spike
+    # Simulating data ingestion steps with mixed environmental noises
+    print("[*] Feeding mock transient configurations to confirm registration maps...")
+    registry.update_metrics(0.441, 0.024, degraded=False, noise_type="MICROSEISMIC")
+    registry.update_metrics(0.120, 0.350, degraded=True, noise_type="SCATTERED_LIGHT")
+    registry.update_metrics(0.550, 0.001, degraded=False, noise_type="60HZ_LINE")
+    registry.update_metrics(0.490, 0.015, degraded=False, noise_type="SCATTERED_LIGHT")
     
-    # 1. Profile Alignment Verification (Simulating 24 spatial radial bins)
-    radial_bins = 24
-    visible_profile = np.zeros(radial_bins)
-    visible_profile[11] = 1.0  
-    
-    dark_matter_profile = np.zeros(radial_bins)
-    dark_matter_profile[12] = 0.441  
-    
-    r_stat, p_stat = calculate_spatial_profile_alignment(visible_profile, dark_matter_profile)
-    print(f"--- SPATIAL MATRIX CORRELATION ---")
-    print(f"Calculated Pearson r : +{r_stat:.3f} (Target > 0.2)")
-    print(f"Empirical p-Value    :  {p_stat:.3f} (Alpha Target < 0.1)")
-    
-    # 2. Multi-Image Time Delay Stream Ingestion
-    print(f"\n--- MULTI-SOURCE LENSING STREAM INGESTION ---")
-    time_axis, source_streams = gen_lensing_time_delay(
-        num_sources=3, 
-        base_delay_hours=1.5, 
-        core_mass_solar=target_mass
-    )
-    for img_id, stream_data in source_streams.items():
-        print(f"Ingested stream stream variant: [{img_id}] | Mean: {np.mean(stream_data):.3e}")
-    
-    # 3. Adaptive Control Loop Calculations
-    adaptive_loop = AdaptivePDController(base_Gp=1.8, Gd=0.9)
-    
-    print(f"\n--- ADAPTIVE LOOP ACTUATION METRICS ---")
-    print(f"Baseline G_p Gain     : {adaptive_loop.base_Gp}")
-    
-    # Run the adaptive optimization adjustment
-    adaptive_loop.adjust_gains(observed_core_mass_solar=target_mass)
-    print(f"Optimized Adaptive G_p: {adaptive_loop.Gp:.3f} (Scale-up active)")
-    print(f"Derivative Gain   G_d : {adaptive_loop.Gd}")
-    
-    # Compute active actuation signal against the final multiplexed stream index
-    composite_error = np.mean([stream[-1] for stream in source_streams.values()])
-    actuation_signal = adaptive_loop.get_actuation(composite_error)
-    
-    print(f"Loop Actuation Signal : {actuation_signal:.3e} rad")
-    print("\nSystem Control Status : MULTI-IMAGE ADAPTIVE OVERLOAD MITIGATION SECURED.")
-    print("====================================================")
+    print("[✓] Systems configured. Waiting for scraper ingestion requests...")
+    try:
+        while True: time.sleep(1)
+    except KeyboardInterrupt: print("\n[-] Terminating tracking daemon links.")
