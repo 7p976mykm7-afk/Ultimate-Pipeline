@@ -1,0 +1,58 @@
+# ==============================================================================
+# PANMATRIX PROJECT COMPILER AND TELEMETRY IGNORE FRAMEWORK
+# ==============================================================================
+
+# Python Runtime Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments & Packages
+.env
+.venv
+venv/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Local Persistent Telemetry Metrics Databases
+.prometheus_data/
+prometheus_data/
+*.tsdb
+*.wal
+
+# Operating System Hidden Traces
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cryptographic Master Configuration Backups
+.env.local
+.env.*.local
+*.seed
+PANMATRIX_MASTER_SEED.txt
