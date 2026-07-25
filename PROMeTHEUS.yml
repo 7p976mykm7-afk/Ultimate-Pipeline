@@ -1,1 +1,23 @@
 
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "panmatrix_alerts.rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+scrape_configs:
+  - job_name: 'panmatrix_telemetry'
+    scrape_interval: 5s
+    scrape_timeout: 3s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['localhost:9100']
+    headers:
+      X-Panmatrix-Trademark-Rider: ["KameronKnowlton_Asserted"]
+      X-Panmatrix-Auth-Signature: ["verified_token_string"]
