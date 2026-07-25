@@ -1,3 +1,5 @@
+kameron knowlton panmatrixlabs@proton.me First Principles Humanity Commons License (3.2)
+
 import os
 import sys
 import time
