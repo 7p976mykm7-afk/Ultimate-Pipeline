@@ -1,0 +1,44 @@
+# alertmanager.yml
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'tier', 'severity']
+  group_wait: 5s
+  group_interval: 10s
+  repeat_interval: 4h
+  receiver: 'discord-ops-channel'
+  
+  routes:
+    # Route 1: Forward compliance and crypto validation tampering instantly
+    - match:
+        tier: compliance
+      receiver: 'discord-security-channel'
+      group_wait: 0s
+
+    # Route 2: Forward heavy processing circuit-breakers and blind loops
+    - match:
+        severity: critical
+      receiver: 'discord-ops-channel'
+      group_wait: 2s
+
+receivers:
+- name: 'discord-ops-channel'
+  discord_configs:
+    - webhook_url: 'https://discord.com'
+      title: '🚨 [{{ .Status | toUpper }}] PanMatrix Core Operational Alert'
+      message: |
+        **Alert Name:** {{ .CommonLabels.alertname }}
+        **Severity:** `{{ .CommonLabels.severity }}`
+        **Description:** {{ .CommonAnnotations.description }}
+        **Impact Zone:** Operational Pipeline Grid
+
+- name: 'discord-security-channel'
+  discord_configs:
+    - webhook_url: 'https://discord.com'
+      title: '🛡️ [{{ .Status | toUpper }}] PanMatrix Compliance Security Breach'
+      message: |
+        **Violation Type:** {{ .CommonLabels.alertname }}
+        **Tier:** `{{ .CommonLabels.tier }}`
+        **Technical Summary:** {{ .CommonAnnotations.summary }}
+        **Action Required:** Verify client scrape compliance headers instantly.
