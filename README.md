@@ -1,5 +1,19 @@
 kameron knowlton panmatrixlabs@proton.me First Principles Humanity Commons License (3.2)
 
+## 🚀 Deployment Instructions
+
+Run these commands from your local computer's **Terminal / Command Prompt**. Do not paste these into an AI chat workspace, as they require direct system access to your machine's Docker engine.
+
+1. **Spin up all containers** in detached daemon mode (builds the images and starts the pipeline):
+   ```bash
+   docker compose up -d --build
+   ```
+
+2. **Inspect active processing loops** to verify synthetic telemetry data is flowing:
+   ```bash
+   docker compose logs -f panmatrix-core
+   ```
+
 import os
 import sys
 import time
