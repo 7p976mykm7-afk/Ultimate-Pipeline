@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Service 1: The Core Telemetry Pipeline Processor
+  panmatrix-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.core
+    container_name: panmatrix_core_engine
+    environment:
+      - PANMATRIX_SEED=42
+    network_mode: "host" # Allows seamless localhost socket routing on development environments
+    restart: unless-stopped
+
+  # Service 2: The Prometheus Archival Scraper Engine
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: panmatrix_prometheus_scraper
+    volumes:
+      - ./PROMeTHEUS.yml:/etc/prometheus/prometheus.yml
+      - ./panmatrix_alerts.rules.yml:/etc/prometheus/panmatrix_alerts.rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d' # Keep metrics for 15 days
+      - '--web.enable-lifecycle'             # Allows automatic hot-reloads via automation engines
+    network_mode: "host"
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+    driver: local
