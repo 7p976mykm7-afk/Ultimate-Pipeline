@@ -1,0 +1,81 @@
+# PANMATRIX_AUTOMATION_ENGINE.py (v2.0)
+import os
+import sys
+import time
+import hashlib
+import hmac
+import yaml
+import requests
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    print("[!] Warning: 'psutil' module missing. Run 'pip install psutil' for resource monitoring.")
+
+MASTER_SEED = os.environ.get("PANMATRIX_MASTER_SEED", "KAMERON_KNOWLTON_2026_CORE_SEED").encode('utf-8')
+TIME_STEP = 300  
+PROMETHEUS_CONFIG_PATH = "PROMeTHEUS.yml"
+PROMETHEUS_RELOAD_URL = "http://localhost:9090/-/reload"
+
+def get_current_signature():
+    """Generates the predictable HMAC token based on the active 5-minute epoch bucket."""
+    current_bucket = int(time.time() // TIME_STEP)
+    
+    # Capture live hardware metrics to mix into payload definitions if psutil is ready
+    cpu_usage = psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0
+    ram_usage = psutil.virtual_memory().percent if PSUTIL_AVAILABLE else 0.0
+
+    mock_core_vectors = (
+        "panmatrix_processed_total 0\n"
+        "panmatrix_spatial_pearson_r +0.4410\n"
+        f"panmatrix_system_cpu_percent {cpu_usage:.1f}\n"
+        f"panmatrix_system_ram_percent {ram_usage:.1f}\n"
+        "panmatrix_degraded_state_active 0\n"
+    )
+    
+    rotation_hasher = hashlib.sha256(MASTER_SEED)
+    rotation_hasher.update(str(current_bucket).encode('utf-8'))
+    secret_key = rotation_hasher.digest()
+    
+    return hmac.new(secret_key, mock_core_vectors.encode('utf-8'), hashlib.sha256).hexdigest()
+
+def update_prometheus_config():
+    """Rewrites the configuration with valid rotating HTTP signatures."""
+    token = get_current_signature()
+    
+    config_data = {
+        "global": {"scrape_interval": "15s", "evaluation_interval": "15s"},
+        "rule_files": ["panmatrix_alerts.rules.yml"],
+        "alerting": {"alertmanagers": [{"static_configs": [{"targets": ["localhost:9093"]}]}]},
+        "scrape_configs": [{
+            "job_name": "panmatrix_telemetry",
+            "scrape_interval": "5s",
+            "scrape_timeout": "3s",
+            "metrics_path": "/metrics",
+            "static_configs": [{"targets": ["localhost:9100"]}],
+            "http_headers": {
+                "X-Panmatrix-Trademark-Rider": {"values": ["KameronKnowlton_Asserted"]},
+                "X-Panmatrix-Auth-Signature": {"values": [token]}
+            }
+        }]
+    }
+    
+    with open(PROMETHEUS_CONFIG_PATH, "w") as f:
+        yaml.safe_dump(config_data, f, default_flow_style=False, sort_keys=False)
+    print(f"[*] Signature Updated: {token[:8]}... Syncing Prometheus core.")
+
+    try:
+        response = requests.post(PROMETHEUS_RELOAD_URL)
+        if response.status_code == 200:
+            print("[+] Prometheus pipeline target vectors reloaded successfully.")
+    except requests.exceptions.RequestException:
+        print("[-] Reload failed. Is Prometheus running with '--web.enable-lifecycle'?")
+
+if __name__ == "__main__":
+    print("[*] Starting PanMatrix System Monitoring & Automation Core...")
+    while True:
+        update_prometheus_config()
+        time_to_next_step = TIME_STEP - (time.time() % TIME_STEP)
+        time.sleep(max(time_to_next_step, 5))
