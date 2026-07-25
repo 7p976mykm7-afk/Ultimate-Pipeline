@@ -1,1 +1,33 @@
 
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies needed for compiling resource metrics tracking extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install required mathematical, processing, and pipeline libraries
+RUN pip install --no-cache-dir \
+    numpy==1.26.4 \
+    scipy==1.12.0 \
+    psutil==5.9.8 \
+    fastapi==0.110.0 \
+    uvicorn==0.28.0 \
+    requests==2.31.0
+
+# Copy system code modules directly into the working directory
+COPY PANMATRIX_PIPELINE.core.py .
+COPY PANMATRIX_PROXY_BINDING.py .
+
+# Create a master execution wrapper to spin up the proxy and processing loops concurrently
+RUN echo '#!/bin/bash\n\
+python PANMATRIX_PROXY_BINDING.py & \n\
+sleep 1 \n\
+python PANMATRIX_PIPELINE.core.py \n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+EXPOSE 9100
+
+ENTRYPOINT ["/app/entrypoint.sh"]
