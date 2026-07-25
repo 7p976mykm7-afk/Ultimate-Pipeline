@@ -1,1 +1,256 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PanMatrix Holographic Engine Interface</title>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-glow: rgba(0, 210, 255, 0.2);
+            --neon-dark: #001f3f;
+            --bg-matrix: #020813;
+            --text-main: #d0f0ff;
+        }
+
+        body {
+            background-color: var(--bg-matrix);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .hologram-container {
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 20px var(--neon-glow), inset 0 0 20px var(--neon-glow);
+            border-radius: 8px;
+            background: rgba(2, 12, 28, 0.85);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 25px;
+            position: relative;
+        }
+
+        .hologram-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .header-block {
+            border-bottom: 1px dashed var(--neon-blue);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin: 0;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 2sfr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-layout { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: rgba(0, 31, 63, 0.3);
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .config-code {
+            background: rgba(0, 10, 20, 0.9);
+            color: #5cd6ff;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            border-left: 3px solid var(--neon-blue);
+        }
+
+        .status-badge {
+            color: #39ff14;
+            text-shadow: 0 0 8px #39ff14;
+            font-weight: bold;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 0 5px var(--neon-glow);
+        }
+
+        .btn-action:hover {
+            background: var(--neon-blue);
+            color: var(--neon-dark);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        canvas {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 5, 15, 0.7);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="hologram-container">
+    <div class="header-block">
+        <div>
+            <h1>PANMATRIX TELEMETRY PIPELINE // AUTOMATION ENGINE</h1>
+            <small style="color: #8ab4f8;">COMPLIANCE PROTECTION: 17 U.S.C. 102 SECURED</small>
+        </div>
+        <button class="btn-action" onclick="rotateToken()">Force Rotate Signature</button>
+    </div>
+
+    <div class="grid-layout">
+        <div>
+            <div class="panel" style="margin-bottom: 20px;">
+                <h3 style="margin-top:0; color: var(--neon-blue);">ACTIVE PROMeTHEUS.yml STREAM</h3>
+                <pre class="config-code" id="configDisplay">
+scrape_configs:
+  - job_name: 'panmatrix_telemetry'
+    http_headers:
+      X-Panmatrix-Trademark-Rider: ["KameronKnowlton_Asserted"]
+      X-Panmatrix-Auth-Signature: ["<span id="tokenString" style="color: #fff; text-shadow:0 0 5px #fff;">6f7e4c91b83d2...</span>"]</pre>
+            </div>
+
+            <div class="panel">
+                <h3 style="margin-top:0; color: var(--neon-blue);">SPATIAL COUPLING HARMONIC WAVEFORM</h3>
+                <canvas id="waveCanvas"></canvas>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel" style="display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="margin-top:0; color: var(--neon-blue);">RUNTIME STATE</h3>
+                
+                <div>
+                    <div>SIGNATURE TRACKING:</div>
+                    <div class="status-badge" id="sigStatus">VERIFIED (KameronKnowlton_Asserted)</div>
+                </div>
+
+                <div>
+                    <div>NEXT AUTOMATIC ROTATION:</div>
+                    <div style="color: #ffcc00;" id="timerDisplay">T-284s</div>
+                </div>
+
+                <div>
+                    <div>TELEMETRY BINDING:</div>
+                    <div style="color: #00d2ff;">localhost:9100 /metrics</div>
+                </div>
+                
+                <hr style="border: 0; border-top: 1px dashed rgba(0, 210, 255, 0.3); width: 100%;">
+                
+                <div>
+                    <div style="font-size: 0.8rem; color: #7abccf;">SYSTEM TRADEMARK CLAUSE:</div>
+                    <div style="font-size: 0.75rem; color: #558090; font-style: italic;">Owner: Kameron Knowlton<br>Mark: PANMATRIX MULTI-BAND COUPLING</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Token generator simulation matching the visual interface requirements
+    function generateHex(length) {
+        let result = '';
+        const characters = '0123456789abcdef';
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    function rotateToken() {
+        const tokenDisplay = document.getElementById('tokenString');
+        const token = generateHex(32);
+        tokenDisplay.innerText = token.substring(0, 16) + "... (Active Rotation)";
+        
+        // Flash UI feedback indicator 
+        const badge = document.getElementById('sigStatus');
+        badge.style.color = '#00d2ff';
+        badge.innerText = 'FORCING ROTATION SYNC...';
+        setTimeout(() => {
+            badge.style.color = '#39ff14';
+            badge.innerText = 'VERIFIED (KameronKnowlton_Asserted)';
+        }, 800);
+        
+        timeLeft = 300;
+    }
+
+    // Interactive Timer Element
+    let timeLeft = 284;
+    setInterval(() => {
+        if(timeLeft > 0) {
+            timeLeft--;
+            document.getElementById('timerDisplay').innerText = `T-${timeLeft}s`;
+        } else {
+            rotateToken();
+        }
+    }, 1000);
+
+    // Holographic Telemetry Waveform Animation Canvas Element
+    const canvas = document.getElementById('waveCanvas');
+    const ctx = canvas.getContext('2d');
+    let phase = 0;
+
+    function drawWave() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#00d2ff';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#00d2ff';
+
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x++) {
+            // Overlaying multiple sin arrays to replicate the ligo noise signature spikes
+            const y = canvas.height / 2 + 
+                      Math.sin(x * 0.03 + phase) * 20 + 
+                      Math.sin(x * 0.07 - phase * 1.5) * 8;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        phase += 0.05;
+        requestAnimationFrame(drawWave);
+    }
+    
+    // Scale canvas internally resolution to handle clean element aspect ratio
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    drawWave();
+</script>
+
+</body>
+</html>
