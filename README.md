@@ -1,151 +1,66 @@
-kameron knowlton panmatrixlabs@proton.me First Principles Humanity Commons License (3.2)
+# 🌌 PanMatrix Data Pipeline & Telemetry Grid
+
+An automated data orchestration system featuring integrated infrastructure monitoring, Prometheus metrics archiving, and a custom cryptographic signature validation loop.
+
+---
+
+## 🏗️ Repository Architecture
+
+*   `PANMATRIX_PIPELINE.core.py`: Main processing simulation engine generating synthetic spatial correlation loops.
+*   `PANMATRIX_PROXY_BINDING.py`: FastAPI server proxy handling metric translations and full-duplex WebSockets.
+*   `PROMeTHEUS.yml`: Hardened scraper target profile and HTTP compliance header injections.
+*   `panmatrix_alerts.rules.yml`: Active Prometheus alerting thresholds for blind control loops.
+*   `docker-compose.yml`: Multi-container virtualization topography orchestration file.
+*   `dashboard.html`: Single-file holographic cyberpunk telemetry front-end interface.
+
+---
 
 ## 🚀 Deployment Instructions
 
-Run these commands from your local computer's **Terminal / Command Prompt**. Do not paste these into an AI chat workspace, as they require direct system access to your machine's Docker engine.
+> [!IMPORTANT]  
+> Execute these commands directly on your local machine using an interactive terminal window. These deployment operations require direct system access to your machine's Docker engine and cannot be executed inside an AI text assistant chat box.
 
-1. **Spin up all containers** in detached daemon mode (builds the images and starts the pipeline):
-   ```bash
-   docker compose up -d --build
-   ```
+### Prerequisites
+1. Ensure **Docker Desktop** is installed and actively running on your machine.
+2. Open your system's native command utility:
+   *   **Mac**: Terminal app (`Cmd + Space` -> type "Terminal")
+   *   **Windows**: PowerShell or Command Prompt
+   *   **Linux**: Your default system shell
 
-2. **Inspect active processing loops** to verify synthetic telemetry data is flowing:
-   ```bash
-   docker compose logs -f panmatrix-core
-   ```
+### Step 1: Navigate to Your Project Directory
+Before executing Docker routines, orient your terminal window inside your code directory using the change directory (`cd`) command:
+```bash
+cd /path/to/your/panmatrix-project-folder
+```
 
-import os
-import sys
-import time
-import http.server
-from threading import Thread
-import numpy as np
+### Step 2: Spin Up Containers
+Initialize the network matrix, build the core images, and spin up all telemetry components in detached background mode:
+```bash
+docker compose up -d --build
+```
 
-# System Operational Limits
-ALPHA_LIMIT = 0.10
-MIN_R_LIMIT = 0.20
+### Step 3: Stream Runtime Logs
+Inspect active matrix routines to verify that your synthetic pipeline metrics are calculating and streaming correctly:
+```bash
+docker compose logs -f panmatrix-core
+```
 
-class PanmatrixAdvancedNoiseRegistry:
-    """
-    In-memory storage array that compiles basic spatial correlation statistics
-    and high-resolution LIGO noise transients into distinct telemetry registers.
-    """
-    def __init__(self):
-        # Basic Metrics
-        self.pearson_r = 0.0
-        self.empirical_p = 1.0
-        self.is_degraded = 0
-        self.total_processed = 0
-        
-        # --- ADVANCED LIGO NOISECOUNTERS ---
-        # Tracking environmental and optomechanical interference vectors
-        self.noise_60hz_line_count = 0        # Industrial power grid coupling transients
-        self.noise_microseismic_count = 0    # Low-frequency oceanic crustal waves
-        self.noise_scattered_light_count = 0 # Optical cavity lock-loss glitches
-        
-        # Histogram Matrix Setup
-        self.r_buckets = {-1.0: 0, -0.5: 0, 0.0: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1.0: 0}
-        self.r_sum = 0.0
-        self.r_count = 0
+---
 
-    def inject_ligo_noise_transient(self, noise_type):
-        """Increments high-resolution ground-based interference counters."""
-        if noise_type == "60HZ_LINE":
-            self.noise_60hz_line_count += 1
-        elif noise_type == "MICROSEISMIC":
-            self.noise_microseismic_count += 1
-        elif noise_type == "SCATTERED_LIGHT":
-            self.noise_scattered_light_count += 1
+## 🖥️ Network & Dashboard Access Nodes
 
-    def update_metrics(self, r, p, degraded, noise_type=None):
-        """Updates internal status matrices on the fly."""
-        self.pearson_r = r
-        self.empirical_p = p
-        self.is_degraded = 1 if degraded else 0
-        self.total_processed += 1
-        
-        # Track historical histogram spectrum distribution
-        self.r_count += 1
-        self.r_sum += r
-        for bound in sorted(self.r_buckets.keys()):
-            if r <= bound:
-                self.r_buckets[bound] += 1
-                
-        if noise_type:
-            self.inject_ligo_noise_transient(noise_type)
+Once your container engine completes initialization, your application binds to the following network points on your machine:
 
-    def generate_exposition(self):
-        """Formats multi-band parameters cleanly into standard exposition string blocks."""
-        lines = [
-            f"# HELP panmatrix_processed_total Ingested matrix counts.",
-            f"# TYPE panmatrix_processed_total counter",
-            f"panmatrix_processed_total {self.total_processed}",
-            
-            f"# HELP panmatrix_spatial_pearson_r Calculated spatial alignment gauge.",
-            f"# TYPE panmatrix_spatial_pearson_r gauge",
-            f"panmatrix_spatial_pearson_r {self.pearson_r:+.4f}",
-            
-            f"# HELP panmatrix_degraded_state_active Safe throttle reversal engagement tracking.",
-            f"# TYPE panmatrix_degraded_state_active gauge",
-            f"panmatrix_degraded_state_active {self.is_degraded}",
-            
-            # --- LIGO NOISE ENGINE METRICS ---
-            f"# HELP ligo_noise_60hz_line_transients_total Count of 60Hz power grid harmonic spike events.",
-            f"# TYPE ligo_noise_60hz_line_transients_total counter",
-            f"ligo_noise_60hz_line_transients_total {self.noise_60hz_line_count}",
-            
-            f"# HELP ligo_noise_microseismic_transients_total Count of ocean wave scattering ground vibrations.",
-            f"# TYPE ligo_noise_microseismic_transients_total counter",
-            f"ligo_noise_microseismic_transients_total {self.noise_microseismic_count}",
-            
-            f"# HELP ligo_noise_scattered_light_glitches_total Count of laser mirror cavity scattering anomalies.",
-            f"# TYPE ligo_noise_scattered_light_glitches_total counter",
-            f"ligo_noise_scattered_light_glitches_total {self.noise_scattered_light_count}",
-            
-            f"# HELP panmatrix_correlation_distribution Structural correlation histogram map.",
-            f"# TYPE panmatrix_correlation_distribution histogram"
-        ]
-        
-        le_accumulate = 0
-        for b in sorted(self.r_buckets.keys()):
-            le_accumulate += self.r_buckets[b]
-            lines.append(f'panmatrix_correlation_distribution_bucket{{le="{b}"}} {le_accumulate}')
-            
-        lines.append(f"panmatrix_correlation_distribution_sum {self.r_sum:.4f}")
-        lines.append(f"panmatrix_correlation_distribution_count {self.r_count}")
-        return "\n".join(lines) + "\n"
+*   **Holographic Live Dashboard**: Double-click your local `dashboard.html` file to open it in any web browser. It instantly binds to the active WebSocket stream on `ws://localhost:9100`.
+*   **Prometheus Engine Interface**: Navigate to `http://localhost:9090` to review real-time historical graphing metrics, expression queries, and active target states.
+*   **Raw Telemetry Endpoint**: Query `http://localhost:9100/metrics` to verify data outputs (requires exact compliance scraping headers to avoid an `HTTP 403 Forbidden` response).
 
-# Global data allocation
-registry = PanmatrixAdvancedNoiseRegistry()
+---
 
-class IntegratedNetworkPort(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/metrics":
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(registry.generate_exposition().encode("utf-8"))
-        else:
-            self.send_response(404)
-            self.end_headers()
-    def log_message(self, format, *args): pass
+## ⚖️ Legal Status & Licensing Framework
 
-def start_metrics_server(port=9100):
-    server = http.server.HTTPServer(("0.0.0.0", port), IntegratedNetworkPort)
-    Thread(target=server.serve_forever, daemon=True).start()
-    print(f"[+] Multi-Band Noise Exporter running via: http://localhost:{port}/metrics")
+This repository is governed under the **First-Principles Humanity Commons License (Version 3.2)**, as registered by Kameron Knowlton (2026). 
 
-if __name__ == "__main__":
-    start_metrics_server(port=9100)
-    
-    # Simulating data ingestion steps with mixed environmental noises
-    print("[*] Feeding mock transient configurations to confirm registration maps...")
-    registry.update_metrics(0.441, 0.024, degraded=False, noise_type="MICROSEISMIC")
-    registry.update_metrics(0.120, 0.350, degraded=True, noise_type="SCATTERED_LIGHT")
-    registry.update_metrics(0.550, 0.001, degraded=False, noise_type="60HZ_LINE")
-    registry.update_metrics(0.490, 0.015, degraded=False, noise_type="SCATTERED_LIGHT")
-    
-    print("[✓] Systems configured. Waiting for scraper ingestion requests...")
-    try:
-        while True: time.sleep(1)
-    except KeyboardInterrupt: print("\n[-] Terminating tracking daemon links.")
+*   **17 U.S.C. § 102 Secured**: Active copyrightable expression protection is enforced.
+*   **Defensive Trademark Priority**: This project utilizes mandatory brand compliance tracking via the `X-Panmatrix-Trademark-Rider` header context constraint layers.
+*   **Anti-Containment Mechanism**: Any downstream commercial ingestion, proprietary hoarding, or unauthorized machine learning parsing of this specific expression triggers automatic system closure revoking and immediate copyright infringement liability under standard Berne Convention global statutes.
