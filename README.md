@@ -19,6 +19,28 @@ An automated data orchestration system featuring integrated infrastructure monit
 
 > [!IMPORTANT]  
 > Execute these commands directly on your local machine using an interactive terminal window. These deployment operations require direct system access to your machine's Docker engine and cannot be executed inside an AI text assistant chat box.
+>
+> ### 💡 Note on Using the Automated `deploy.sh` Script
+
+For one-click deployments, an automated shell script (`deploy.sh`) is provided. Depending on your Operating System, observe the following execution guidelines:
+
+*   **Mac / Linux Users**: 
+    Before running the script for the very first time, your system requires explicit execution permissions. Open your terminal inside the project directory and run this one-time command:
+    ```bash
+    chmod +x deploy.sh
+    ```
+    Once permissions are granted, you can launch the entire grid anytime by running:
+    ```bash
+    ./deploy.sh
+    ```
+
+*   **Windows Users**: 
+    The `.sh` file format is a Bash script meant for Unix environments. It will **not** work inside standard Windows Command Prompt (`cmd`) or basic PowerShell. To use it on Windows, you must run it inside:
+    *   **Git Bash** (installed automatically alongside Git for Windows)
+    *   **WSL** (Windows Subsystem for Linux)
+    
+    *If you do not have Git Bash or WSL, simply bypass the script and type the native `docker compose up -d --build` command directly into your regular PowerShell window instead.*
+
 
 ### Prerequisites
 1. Ensure **Docker Desktop** is installed and actively running on your machine.
