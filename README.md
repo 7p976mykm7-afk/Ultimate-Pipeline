@@ -41,6 +41,24 @@ For one-click deployments, an automated shell script (`deploy.sh`) is provided. 
     
     *If you do not have Git Bash or WSL, simply bypass the script and type the native `docker compose up -d --build` command directly into your regular PowerShell window instead.*
 
+    ### 💡 Automated One-Click Deployment Scripts
+
+To bypass typing docker instructions manually, cross-platform automation execution targets are provided in the root repository folder:
+
+*   **Windows Environment Users**: 
+    Simply double-click the **`deploy.bat`** script file using File Explorer. It automatically checks your Docker status, mounts your data volumes, and starts trailing the processing engine logs instantly.
+
+*   **Mac / Linux Environment Users**: 
+    Open your system terminal within this directory and execute the following permission enablement rule once:
+    ```bash
+    chmod +x deploy.sh
+    ```
+    Once authorized, launch the entire operational matrix grid anytime using the local execution pointer:
+    ```bash
+    ./deploy.sh
+    ```
+
+
 
 ### Prerequisites
 1. Ensure **Docker Desktop** is installed and actively running on your machine.
