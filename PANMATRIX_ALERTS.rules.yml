@@ -1,1 +1,25 @@
 
+groups:
+  - name: panmatrix_security_and_resilience_rules
+    rules:
+      # ALERT 1: Tamper Detection (Cryptographic HMAC Failure)
+      - alert: PanmatrixCryptoVerificationFailed
+        expr: panmatrix_security_tamper_status == 1
+        for: 0s
+        labels:
+          severity: page
+          tier: security
+        annotations:
+          summary: "Cryptographic telemetry tampering detected: Scrape signature validation failure."
+          description: "Incoming scrape request provided an invalid HMAC-SHA256 token. Telemetry registers locked down instantly to protect systemic operational data."
+
+      # ALERT 2: Legal Header Violation (Defensive Brand Scrubbing Block)
+      - alert: PanmatrixTrademarkHeaderMissing
+        expr: panmatrix_trademark_header_valid == 0
+        for: 0s
+        labels:
+          severity: critical
+          tier: compliance
+        annotations:
+          summary: "Defensive Trademark Header missing or scrubbed by external client."
+          description: "Scrape requests rejected due to missing 'X-Panmatrix-Trademark-Rider' confirmation tags. Processing engine in forced safe-isolation mode."
