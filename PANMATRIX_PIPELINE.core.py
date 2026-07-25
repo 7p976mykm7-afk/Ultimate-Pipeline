@@ -10,7 +10,13 @@ from threading import Thread
 import numpy as np
 import scipy.stats as stats
 
-# Enforce hardware reproducibility via configurable system environment variables
+# Enforce third-party system profiling injection
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
 DEFAULT_SEED = int(os.environ.get("PANMATRIX_SEED", 42))
 np.random.seed(DEFAULT_SEED)
 
@@ -40,6 +46,9 @@ class PanmatrixMasterRegistry:
         self.actuation_out = 0.0
         self.tamper_status = 0
         self.header_status = 1
+        
+        # Performance RAM diagnostics registers
+        self.allocated_memory_bytes = 0.0
         
         self.noise_60hz_line_count = 0        
         self.noise_microseismic_count = 0    
@@ -99,6 +108,10 @@ class PanmatrixMasterRegistry:
             f'# TYPE panmatrix_crypto_signature_verification gauge',
             f'panmatrix_crypto_signature_verification{{hmac_sha256="{crypto_hash}"}} 1.0',
             
+            f'# HELP panmatrix_runtime_memory_allocation_bytes Active RSS memory allocation tracking gauge.',
+            f'# TYPE panmatrix_runtime_memory_allocation_bytes gauge',
+            f'panmatrix_runtime_memory_allocation_bytes {self.allocated_memory_bytes}',
+            
             f'# HELP panmatrix_security_tamper_status Security breach indicator flag.',
             f'# TYPE panmatrix_security_tamper_status gauge',
             f'panmatrix_security_tamper_status {self.tamper_status}',
@@ -127,7 +140,6 @@ registry = PanmatrixMasterRegistry()
 class SecureMetricsScrapeHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/metrics":
-            # 1. Validate Mandatory Defensive Trademark Header
             tm_header = self.headers.get("X-Panmatrix-Trademark-Rider")
             if not tm_header or tm_header != "KameronKnowlton_Asserted":
                 registry.header_status = 0
@@ -137,9 +149,7 @@ class SecureMetricsScrapeHandler(http.server.BaseHTTPRequestHandler):
                 return
             registry.header_status = 1
             
-            # 2. Dynamic Symmetric Key Validation Check
             auth_token = self.headers.get("X-Panmatrix-Auth-Signature")
-            # Generate local ground-truth expected vector match to compare against client entry
             core_vectors = (
                 f'panmatrix_processed_total {registry.total_processed}\n'
                 f'panmatrix_spatial_pearson_r {registry.pearson_r:+.4f}\n'
@@ -176,9 +186,20 @@ class PanmatrixAdaptiveEngine:
         self.degraded_mode = False
         self.current_mc_iters = 10000
         self.current_poll_interval = 2
+        
+        if PSUTIL_AVAILABLE:
+            self.process_handle = psutil.Process(os.getpid())
 
         if not os.path.exists(self.watch_dir):
             os.makedirs(self.watch_dir)
+
+    def track_memory_footprint(self):
+        """Polls hardware interface variables to record active process RAM allocations."""
+        if PSUTIL_AVAILABLE:
+            mem_bytes = self.process_handle.memory_info().rss
+            registry.allocated_memory_bytes = float(mem_bytes)
+            return mem_bytes
+        return 0
 
     def process_baryonic_alignment(self, x, y):
         true_r, _ = stats.pearsonr(x, y)
@@ -202,14 +223,3 @@ class PanmatrixAdaptiveEngine:
                 
             program = payload.get("observatory_program", "ANON_CLUSTER")
             filter_band = payload.get("optical_filter", "F444W")
-            noise_transient = payload.get("ligo_noise_flag", None)
-            
-            # Allow fallback values if direct array mappings are overridden by short test sets
-            r_override = payload.get("pearson_r", None)
-            p_override = payload.get("empirical_p", None)
-            
-            if r_override is not None and p_override is not None:
-                r, p = float(r_override), float(p_override)
-            else:
-                x = np.array(payload.get("baryonic_flux_vector", np.zeros(12)), dtype=float)
-                y = np.array(payload.get("dark_matter_shear_vector", np.zeros(12)), dtype=float)
